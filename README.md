@@ -1,105 +1,142 @@
-This project aims to build a machine learning model that can predict the genre of a movie based on its plot summary or other textual information. The model uses techniques such as TF-IDF (Term Frequency-Inverse Document Frequency) and word embeddings, along with classifiers like Naive Bayes, Logistic Regression, and Support Vector Machines (SVM) to classify movie genres.
+**Movie Genre Classification — Leveraging AWS SageMaker & Bedrock**
 
-The dataset for this project is sourced from Kaggle and provided by CodeSoft.
+## **Project Overview**
+This project builds an **end-to-end machine learning pipeline** to classify movie genres based on their plot summaries or textual information.  
+The model combines **classical ML techniques** such as **TF-IDF**, **word embeddings**, and classifiers like **Naive Bayes**, **Logistic Regression**, and **Support Vector Machines (SVM)** with modern **AWS cloud-based tools** for scalability, deployment, and explainability using **Amazon SageMaker** and **AWS Bedrock**.
 
-Table of Contents
-	•	Project Overview
-	•	Dataset
-	•	Modeling
-	•	Techniques Used
-	•	Requirements
-	•	Installation
-	•	Usage
-	•	Evaluation
-	
+The solution not only predicts genres but also **explains** why a movie was classified into a particular genre using **Generative AI (via Bedrock)** — bridging model interpretability and user engagement.
 
-Project Overview
+---
 
-Movie genre classification is an important task in the field of Natural Language Processing (NLP), where the goal is to predict the genre of a movie based on its textual description (such as the plot summary). The project leverages machine learning models to perform multi-class classification, where each movie is classified into one of several genres (e.g., Action, Comedy, Drama, etc.).
+## **My Role**
+I designed and implemented the complete ML workflow, from **data ingestion and preprocessing** to **model training**, **deployment**, and **explanation generation**.  
+The implementation leverages **Amazon SageMaker** for model lifecycle management and **AWS Bedrock** for generating natural language insights on model predictions.
 
-Dataset
+---
 
-The dataset used in this project is sourced from Kaggle and provided by CodeSoft. It consists of movies and their corresponding plot summaries, along with the genre labels.
-
-The dataset contains the following attributes:
-	•	Plot: The plot summary of the movie.
-	•	Genre: The genre label for the movie (e.g., Action, Drama, Comedy, etc.).
-
-Dataset link: (You can provide the specific Kaggle dataset link here if available)
-
-Modeling
-
-For movie genre classification, several machine learning algorithms were applied:
-	1.	Naive Bayes: A probabilistic classifier based on Bayes’ theorem, often used for text classification.
-	2.	Logistic Regression: A simple linear model for multi-class classification.
-	3.	Support Vector Machines (SVM): A powerful classification algorithm that aims to find the best separating hyperplane between different genres.
-
-To extract features from the text data (movie plots), the following techniques were used:
-	•	TF-IDF (Term Frequency-Inverse Document Frequency): A statistical method for transforming text data into numerical features, capturing the importance of words in the plot.
-	•	Word Embeddings: Pre-trained word vectors (such as Word2Vec or GloVe) were used to convert words into vector representations, capturing semantic meaning.
-
-Techniques Used
-
-1. TF-IDF (Term Frequency-Inverse Document Frequency)
-	•	TF-IDF is used to convert the raw text into numeric features by calculating the importance of words based on their frequency in the document and their rarity across the entire dataset.
-
-2. Word Embeddings
-	•	Word embeddings like Word2Vec or GloVe convert words into dense vector representations that capture their semantic meaning. These embeddings are used to enhance the feature representation of movie plots.
-
-3. Classifiers
-	•	Naive Bayes: A probabilistic classifier suitable for text classification tasks.
-	•	Logistic Regression: A linear model used for multi-class classification, which works well for this task.
-	•	Support Vector Machines (SVM): A powerful classifier that maximizes the margin between different genres and provides robust performance.
-
-Requirements
-
-To run this project, you’ll need the following Python libraries:
-	•	Python 3.x
-	•	pandas
-	•	numpy
-	•	scikit-learn
-	•	nltk
-	•	matplotlib
-	•	seaborn
-	•	tensorflow (for word embeddings)
-
-You can install the required libraries by running:
-
-pip install pandas numpy scikit-learn nltk matplotlib seaborn tensorflow
-
-Installation
-	1.	Clone the repository:
-
-git clone https://github.com/your-username/movie-genre-classification.git
-cd movie-genre-classification
+## **Architecture Overview**
 
 
-	2.	Install the required dependencies:
+Plot summaries → Amazon S3 (Raw Data Storage)
+        ↓
+SageMaker Studio / Data Wrangler → Feature Extraction (TF-IDF / Embeddings)
+        ↓
+SageMaker Training Jobs → Model Training & Tuning
+        ↓
+SageMaker Model Registry → Version Control & Tracking
+        ↓
+SageMaker Endpoint → Real-Time Inference API
+        ↓
+Bedrock (Foundation Model + Knowledge Base)
+        ↓
+User Interface / Chatbot → Genre Prediction + Natural Language Explanation
+Implementation Details
 
+1. Data Preparation & Feature Engineering
+	•	Uploaded the dataset (movie plots + genre labels) to an S3 bucket.
+	•	Used SageMaker Studio notebooks for:
+	•	Text cleaning (tokenization, lowercasing, removing special characters).
+	•	Feature extraction using TF-IDF and Word Embeddings (GloVe).
+	•	Exported processed data back to S3 for reproducible experiments.
+
+⸻
+
+2. Model Training & Deployment with SageMaker
+	•	Explored multiple classifiers:
+	•	Naive Bayes, Logistic Regression, Support Vector Machines (SVM).
+	•	Used SageMaker Training Jobs to automate training runs, store artifacts, and track model metrics.
+	•	The best-performing model was registered in the SageMaker Model Registry.
+	•	Deployed the model as a SageMaker Endpoint for real-time API inference.
+from sagemaker import Session, Estimator, image_uris
+from sagemaker.inputs import TrainingInput
+
+sess = Session()
+role = "<SAGEMAKER_EXECUTION_ROLE>"
+bucket = "<YOUR_S3_BUCKET>"
+
+xgb_image = image_uris.retrieve("xgboost", sess.boto_region_name, "latest")
+
+estimator = Estimator(
+    image_uri=xgb_image,
+    role=role,
+    instance_count=1,
+    instance_type="ml.m5.xlarge",
+    output_path=f"s3://{bucket}/artifacts/"
+)
+
+estimator.fit({"train": TrainingInput(f"s3://{bucket}/processed/train.csv", content_type="text/csv")})
+3. Generative AI Layer with Bedrock
+	•	Built a Knowledge Base containing:
+	•	Movie genre definitions.
+	•	Common plot-to-genre keyword mappings.
+	•	Integrated Bedrock to generate explainable predictions using natural language.
+
+Example Bedrock prompt:
+
+“Given the movie plot and the predicted genre, explain in 2–3 sentences why the model classified it as that genre. Highlight key words or themes that influenced the classification.”
+
+Bedrock then generates an output such as:
+
+“The plot contains recurring themes of warfare, heroism, and revenge, which are strong indicators of the ‘Action’ genre. The model identified frequent use of combat-related verbs and tense pacing.”
+
+⸻
+
+4. API Orchestration & User Interface
+	•	Created a lightweight API (AWS Lambda + API Gateway) that:
+	1.	Accepts a movie plot.
+	2.	Sends it to the SageMaker Endpoint for genre prediction.
+	3.	Passes the plot and prediction to Bedrock.
+	4.	Returns a user-friendly explanation with the predicted genre.
+
+Example Response:
+{
+  "Genre": "Drama",
+  "Explanation": "The model detected emotional narrative arcs and interpersonal conflict common in dramatic storytelling."
+}
+5. Monitoring & Production Readiness
+	•	Enabled CloudWatch metrics for:
+	•	Endpoint latency
+	•	Invocation count
+	•	Prediction drift monitoring
+	•	Used SageMaker Model Monitor for detecting feature drift and retraining triggers.
+	•	Controlled Bedrock token usage for cost management and prompt safety (avoiding hallucinations).
+
+⸻
+
+Evaluation & Metrics
+
+The models were evaluated using:
+	•	Accuracy
+	•	Precision
+	•	Recall
+	•	F1-Score
+Tech Stack
+	•	Python (NumPy, Pandas, Scikit-learn, NLTK)
+	•	AWS SageMaker — Model training, tuning, deployment
+	•	AWS Bedrock — Generative AI layer
+	•	Amazon S3 — Data storage
+	•	AWS Lambda — API orchestration
+	•	CloudWatch — Monitoring
+	•	TensorFlow (optional for embeddings)
+
+Setup & Installation
+# Clone the repository
+git clone https://github.com/afra16181falakh/Movie-genre-Classification.git
+cd Movie-genre-Classification
+
+# Install dependencies
 pip install -r requirements.txt
 
-
-	3.	Download the dataset from Kaggle and place it in the data/ directory.
-
-Usage
-	1.	Load and Preprocess the Data:
-	•	The data is preprocessed by removing special characters, lowercasing text, and tokenizing the plot summaries.
-	2.	Feature Extraction:
-	•	Use TF-IDF or Word Embeddings to convert the plot summaries into numerical features that can be used for training.
-	3.	Train the Model:
-	•	Train the models (Naive Bayes, Logistic Regression, SVM) on the processed data to predict the genre of a movie.
-	4.	Evaluate the Model:
-	•	Evaluate the models using classification metrics such as accuracy, precision, recall, and F1-score.
-
-To run the script and train the model:
-
+# Run training
 python train_model.py
 
-Evaluation
+Conclusion
+This project demonstrates how traditional NLP-based classification can be scaled and enhanced through cloud-native AI services.
+By combining SageMaker’s managed ML infrastructure with Bedrock’s generative reasoning, the pipeline delivers not only accurate genre predictions but also human-readable insights — bridging interpretability and production-grade deployment.
 
-The model’s performance is evaluated using the following metrics:
-	•	Accuracy: Percentage of correctly predicted genres.
-	•	Precision: Proportion of correctly predicted genres to all predicted genres.
-	•	Recall: Proportion of correctly predicted genres to all actual genres.
-	•	F1-Score: The harmonic mean of precision and recall, providing a balanced evaluation.
+⸻
 
+Future Enhancements
+	•	Integrate multilabel genre prediction (movies can belong to multiple genres).
+	•	Add semantic search for similar movie plots using Bedrock embeddings.
+	•	Extend to movie recommendation system using genre similarity scores.
