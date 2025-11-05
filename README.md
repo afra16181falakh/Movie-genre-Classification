@@ -6,14 +6,6 @@ The model combines **classical ML techniques** such as **TF-IDF**, **word embedd
 
 The solution not only predicts genres but also **explains** why a movie was classified into a particular genre using **Generative AI (via Bedrock)** — bridging model interpretability and user engagement.
 
----
-
-## **My Role**
-I designed and implemented the complete ML workflow, from **data ingestion and preprocessing** to **model training**, **deployment**, and **explanation generation**.  
-The implementation leverages **Amazon SageMaker** for model lifecycle management and **AWS Bedrock** for generating natural language insights on model predictions.
-
----
-
 ## **Architecture Overview**
 
 
@@ -124,10 +116,10 @@ Setup & Installation
 git clone https://github.com/afra16181falakh/Movie-genre-Classification.git
 cd Movie-genre-Classification
 
-# Install dependencies
+Install dependencies
 pip install -r requirements.txt
 
-# Run training
+Run training
 python train_model.py
 
 Conclusion
